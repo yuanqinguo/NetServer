@@ -1,0 +1,128 @@
+#ifndef COMM_STRUCT_H
+#define COMM_STRUCT_H
+
+#include <string>
+#include <map>
+
+
+#define REPLY_UNKNOW "unknown error!"
+#define REPLY_FAIL "command fail!"
+#define REPLY_DATA_DEF "data deficiencies!"
+#define REPLY_ERROR "data error!"
+#define REPLY_ZONECODE_ERR "areacode invalid!"
+#define REPLY_CMD_INVALID "invalid command!"
+
+//数据包检测检测结果类型
+typedef enum 
+{
+	UNKNOW = -1,	//未知错误
+	SUCCESS = 0,	//成功
+	FAIL = 1,		//失败
+	DATA_OK = 2,	//数据正常
+	DATA_DEF = 3,	//数据不足（被分包），表示需要继续接收
+	DATA_ERROR = 4,	//数据错误
+	ZONECODE_ERR = 5,	//区域编码无效
+	CMD_INVALID = 6,	//请求无效	
+
+}HAND_REPLY;
+
+//数据包检测检测结果类型
+typedef enum 
+{
+	E_UNKNOW = -1,		//未知
+	E_APPROVED = 1,		//已审批
+	E_UNDERTAKED = 2,	//已承接
+	E_PRODUCED = 3,		//已制作
+	E_PAID = 4,			//已支付
+	E_SCRAPPED = 5,		//已报废
+	E_CANCELED = 6,		//已注销
+	E_LOSS = 7,			//已挂失	
+	E_LOCKED = 8,		//已锁定
+	E_EXPIRED = 9		//已过期
+
+}EN_ESTATUS;
+
+
+//请求对象类型
+typedef enum
+{
+	REQ_UNKNOW = -1,
+	REQ_SEAL_REQ = 0x05,	//签章请求
+	REQ_SEAL_LOG = 0x06,	//签章日志
+	REQ_CANCEL_REQ = 0x07,	//撤销请求
+	REQ_CANCEL_LOG = 0x08,	//撤销日志
+	REQ_VERIFY_REQ = 0x09,	//验证请求
+	REQ_CREATE_REQ = 0x10	//生产请求
+}REQUEST_TYPE;
+
+//生产印章
+typedef enum
+{
+	ESEL_SEALCODE = 0,		//印章编码
+	ESEL_SEALNAME,		//印章名称
+	ESEL_HASH,			//印模hash
+	ESEL_COMPNAME,		//单位名称
+	ESEL_COMPCODE,		//单位编码
+	ESEL_TYPE,			//印章类型
+	ESEL_DESCRIPTION,	//印章描述
+	ESEL_HEIGHT,		//印章高度
+	ESEL_WIDTH,			//印章宽度
+	ESEL_SIZE,			//图像大小
+	ESEL_EXT,			//图像后缀
+	ESEL_KEYSN,			//密钥盘序号
+	ESEL_KEYTYPE,		//密钥盘类型
+	LGPE_PUUNIT,		//制作单位
+	LGPE_PUUNITCODE,	//制作单位编码
+	LGPE_PUNAME,		//制作人
+	LGPE_PUACCOUNT,		//制作人账号
+	ESEL_CERTUID,		//证书唯一值	
+	ESEL_CERTSN,		//证书序列
+	ESEL_CERTHASH,		//证书指纹
+	LGPE_IP,			//设备IP
+	LGPE_MAC,			//设备mac
+	LGPE_INFO,			//设备信息
+	LGPE_CLIENTOS,		//设备操作系统
+	LGPE_CLIENTVERSION	//生产软件版本
+}ESEAL_PRODUCTION;
+
+//配置信息
+typedef struct
+{
+	std::string st_address;
+	std::string st_port;
+	std::string st_username;
+	std::string st_password;
+}ConfigInfo;
+
+//通信协议
+typedef struct  
+{
+	int ilen;
+	std::string strAreaCode;
+	std::string strVersion;
+	REQUEST_TYPE eType; //请求类型
+	std::string strTime;//时间
+	std::string strLicence; //软件许可 
+	std::string strSealCode;
+	int iCrc;	//校验
+	std::map<ESEAL_PRODUCTION, std::string> st_map;
+	//根据键，获取值
+	std::string Get(ESEAL_PRODUCTION key)
+	{
+		std::map<ESEAL_PRODUCTION, std::string>::iterator it;
+		it = st_map.find(key);
+		if(it != st_map.end())
+		{
+			return it->second;
+		}
+		return "";
+	}
+
+	//增加一对键值对
+	void Set(ESEAL_PRODUCTION key, std::string& value)
+	{
+		st_map.insert(std::make_pair(key, value));
+	}
+}ComProtocol;
+
+#endif

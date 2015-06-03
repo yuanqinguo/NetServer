@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\Request">
+      <UniqueIdentifier>{6528146a-0d41-43e6-b0bd-061a45e49c8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Connection">
+      <UniqueIdentifier>{641535cb-29f3-41f4-9746-4beff53891b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Common">
+      <UniqueIdentifier>{a907f24a-005d-4b35-ac60-ba67adea0900}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Common">
+      <UniqueIdentifier>{fefca21b-8387-4d16-86ab-82bda6d12085}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Connection">
+      <UniqueIdentifier>{448312dd-6bee-4597-a8aa-1f8881f71106}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Request">
+      <UniqueIdentifier>{d9ff5738-fca8-46db-b25a-5f4880998774}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Log">
+      <UniqueIdentifier>{16550df7-cd1d-4078-bbe1-e5ccc6c36842}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Log">
+      <UniqueIdentifier>{7186e615-103d-4410-9ae5-44a53e79020d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Mysql">
+      <UniqueIdentifier>{79d2b160-7e2d-47c8-ae18-84e6e8c7da8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Mysql">
+      <UniqueIdentifier>{de517eac-bbfd-4ad6-9944-a1d5b70e97de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Redis">
+      <UniqueIdentifier>{04a0d186-de63-49b2-bf5e-0d865ac64e79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Redis">
+      <UniqueIdentifier>{f5835601-b7a6-4745-932a-92e1f6885018}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Config">
+      <UniqueIdentifier>{9902b821-b0a4-4808-b256-25a4da2dd553}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Config">
+      <UniqueIdentifier>{8d2858e5-62ba-44c2-b821-689811eab057}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WLog\wLog.cpp">
+      <Filter>源文件\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Redis\CRedisServiceMgr.cpp">
+      <Filter>源文件\Redis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Redis\CRedisClient.cpp">
+      <Filter>源文件\Redis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Mysql\CSqlServiceMgr.cpp">
+      <Filter>源文件\Mysql</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Mysql\CSqlClient.cpp">
+      <Filter>源文件\Mysql</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Config\CConfiger.cpp">
+      <Filter>源文件\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Redis\CUtilRedis.cpp">
+      <Filter>源文件\Redis</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Mysql\CUtilSql.cpp">
+      <Filter>源文件\Mysql</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Mysql\CField.cpp">
+      <Filter>源文件\Mysql</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Mysql\CRecord.cpp">
+      <Filter>源文件\Mysql</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Common\Common.cpp">
+      <Filter>源文件\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Common\Locker.cpp">
+      <Filter>源文件\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Connection\CEventBaseMgr.cpp">
+      <Filter>源文件\Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Connection\CMainEventBase.cpp">
+      <Filter>源文件\Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Request\CMgrRequest.cpp">
+      <Filter>源文件\Request</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Request\CReqHandlerObj.cpp">
+      <Filter>源文件\Request</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Request\CHttpParse.cpp">
+      <Filter>源文件\Request</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\WLog\internallock.h">
+      <Filter>头文件\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WLog\wLog.h">
+      <Filter>头文件\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Mysql\CSqlServiceMgr.h">
+      <Filter>头文件\Mysql</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Mysql\CSqlClient.h">
+      <Filter>头文件\Mysql</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Redis\CRedisClient.h">
+      <Filter>头文件\Redis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Redis\CRedisServiceMgr.h">
+      <Filter>头文件\Redis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Config\CConfiger.h">
+      <Filter>头文件\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Redis\CUtilRedis.h">
+      <Filter>头文件\Redis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Mysql\CUtilSql.h">
+      <Filter>头文件\Mysql</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Mysql\CField.h">
+      <Filter>头文件\Mysql</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Mysql\CRecord.h">
+      <Filter>头文件\Mysql</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Common\CommStruct.h">
+      <Filter>头文件\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Common\locker.h">
+      <Filter>头文件\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Common\nocopyable.h">
+      <Filter>头文件\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Connection\CEventBaseMgr.h">
+      <Filter>头文件\Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Connection\CMainEventBase.h">
+      <Filter>头文件\Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Request\CMgrRequest.h">
+      <Filter>头文件\Request</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Request\CReqHandlerObj.h">
+      <Filter>头文件\Request</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Common\Common.h">
+      <Filter>头文件\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Request\CHttpParse.h">
+      <Filter>头文件\Request</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
