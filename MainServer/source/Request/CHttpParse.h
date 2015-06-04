@@ -17,8 +17,10 @@ public:
 
 	int get_content_lenght() { return m_content_lenght; }
 	std::string& get_content() { return m_content; }
-protected:
+
 	void parse_request();
+	void parse_request(std::string& request);
+protected:
 
 	int parse_line_data_type();
 

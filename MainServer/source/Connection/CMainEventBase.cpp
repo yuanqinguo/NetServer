@@ -203,11 +203,8 @@ void CMainEventBase::OnAcceptCallback(evutil_socket_t& fd, short events)
 		WLogError("CMainEventBase::OnAcceptCallback::bufferevent_socket_new error!\n");
 		return ;
 	}
-	bufferevent_setcb(bev, SocketReadCallBack, SocketWirteCallBack, SocketEventCallBack, this);
+	bufferevent_setcb(bev, SocketReadCallBack, NULL/*SocketWirteCallBack*/, SocketEventCallBack, this);
 	bufferevent_enable(bev, EV_READ | EV_PERSIST);
-
-	static int ipushNum;
-	WLogInfo("OnAcceptCallback::PushTask::ipushNum = %d, socket = %d\n", ipushNum++, fd);
 
 }
 
@@ -245,9 +242,7 @@ void CMainEventBase::OnReadCallback(bufferevent*& bev)
 
 void CMainEventBase::SocketWirteCallBack(bufferevent* bev, void* arg)
 {
-	static int num;
-	evutil_socket_t fd = bufferevent_getfd(bev);
-	WLogInfo("CMainEventBase::SocketWirteCallBack==========>done! replynum = %d, socket = %d\n", num++, fd);
+	
 }
 
 void CMainEventBase::OnWirteCallback(bufferevent*& bev)
@@ -278,12 +273,14 @@ void CMainEventBase::OnEventCallback(bufferevent*& bev, short& event)
 		WLogError("unknow error!\n");
 	}
 
-	static int icount ;
-	WLogInfo("CMainEventBase::OnEventCallback::connection closed icount = %d\n", icount++);
+	WLogError("CMainEventBase::OnEventCallback::close\n");
+
 	evutil_socket_t sock = bufferevent_getfd(bev);
 	//这将自动close套接字和free读写缓冲区
 	if (CMgrRequest::GetInstance())
 		CMgrRequest::GetInstance()->ReleaseHandler(sock);
+	else
+		bufferevent_free(bev);
 }
 
 void CMainEventBase::TimeoutCallBack(evutil_socket_t fd, short event, void* arg)

@@ -291,7 +291,12 @@ void CEventBaseMgr::OnEventCallback(bufferevent*& bev, short& event)
 		SSL_free(ssl);
 	}
 #endif
-	bufferevent_free(bev);
+	evutil_socket_t sock = bufferevent_getfd(bev);
+	//这将自动close套接字和free读写缓冲区
+	if (CMgrRequest::GetInstance())
+		CMgrRequest::GetInstance()->ReleaseHandler(sock);
+	else
+		bufferevent_free(bev);
 }
 
 void CEventBaseMgr::TimeoutCallBack(evutil_socket_t fd, short event, void* arg)

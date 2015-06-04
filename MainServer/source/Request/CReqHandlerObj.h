@@ -4,6 +4,7 @@
 #include <string>
 #include "locker.h"
 #include "CObjPoolTmpl.h"
+#include "CHttpParse.h"
 
 /*
 * 请求处理对象，每个请求为一个CRequestObj对象
@@ -51,6 +52,7 @@ private:
 
 	CRedisServiceMgr* m_pRedisMgr;
 	CSqlServiceMgr* m_pSqlMgr;
+	CHttpParse* m_pHttpParse;
 
 	void* m_pArg;
 };

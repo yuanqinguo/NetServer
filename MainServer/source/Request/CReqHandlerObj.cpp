@@ -14,19 +14,31 @@ CReqHandlerObj::CReqHandlerObj(void* arg)
 	m_requestStr.clear();
 	m_pRedisMgr = CRedisServiceMgr::GetInstance();
 	m_pSqlMgr = CSqlServiceMgr::GetInstance();
+	m_pHttpParse = NULL;
 }
 
 CReqHandlerObj::~CReqHandlerObj()
 {
 	m_pArg = NULL;
+	if(m_pHttpParse)
+		delete m_pHttpParse;
+
+	m_pHttpParse = NULL;
 }
 
 //此函数被执行表示当前为一个有效的请求，并且，数据接收完整无误
 int CReqHandlerObj::OnHandle(std::string& reply)
 {
-	CHttpParse parse(m_requestStr);
-	std::string content = parse.get_content();
+	std::string& content = m_pHttpParse->get_content();
 
+
+	reply = "HTTP/1.1 200 OK\r\n"
+			"Date: Thu, 04 Jun 2015 12:56:22 GMT\r\n"
+			"Server: nginx\r\n"
+			"Content-type: text/html;charset=UTF-8\r\n"
+			"Connection: Close\r\n"
+			"Content-Length: 17\r\n\r\n"
+			"test hello world";
 	return SUCCESS;
 }
 
@@ -35,22 +47,20 @@ int CReqHandlerObj::CheckData(const std::string& request)
 	//每次数据流通，更新对象活动时间，避免被检测机制剔除
 	UpdateActiveTime();
 	m_requestStr += request;
-	return DATA_OK;
-	//检查包头包尾
-	m_requestStr += request;
-	const char* pHeader = strstr(m_requestStr.c_str(),"##");
-	const char* pEnd = strstr(m_requestStr.c_str(),"\r\n");
-	if (pHeader && pEnd)
+
+	if(m_pHttpParse)
+		m_pHttpParse->parse_request(m_requestStr);
+	else
+		m_pHttpParse = new CHttpParse(m_requestStr);
+
+	if (m_pHttpParse->get_content().length() == m_pHttpParse->get_content_lenght())
 	{
 		return DATA_OK;
 	}
-	else if(!pHeader)
-	{
-		return DATA_ERROR;
-	}
-	else if (!pEnd)
+	else if (m_pHttpParse->get_content().length() < m_pHttpParse->get_content_lenght())
 	{
 		return DATA_DEF;
 	}
-	return UNKNOW;
+
+	return DATA_ERROR;
 }

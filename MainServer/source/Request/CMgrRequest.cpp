@@ -44,7 +44,7 @@ void CMgrRequest::DelInstance()
 	m_pInstance = NULL;
 }
 
-void CMgrRequest::ReleaseHandler(evutil_socket_t& sockfd)
+bool CMgrRequest::ReleaseHandler(evutil_socket_t& sockfd)
 {
 	CReqHandlerObj* pObj = NULL;
 	MemoryPool* pool = MemPoolObj::GetMemoryPool();
@@ -61,7 +61,11 @@ void CMgrRequest::ReleaseHandler(evutil_socket_t& sockfd)
 			m_ObjMgr.Delete(pool, pObj);
 			m_ReqHandlerMap.erase(it);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 void CMgrRequest::OnCheckActiveTime()

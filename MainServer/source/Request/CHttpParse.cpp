@@ -9,6 +9,8 @@ CHttpParse::CHttpParse(std::string& request)
 	:m_requestData(request)
 	,m_bHeaderDown(false)
 {
+	m_httpMethod = METHOD_UNKNOW;
+	m_content_lenght = 0;
 	parse_request();
 }
 
@@ -24,6 +26,29 @@ void CHttpParse::parse_request()
 	{
 		WLogError("CHttpParse::parse_request::parse_line_data_type::error!\n");
 	}
+}
+
+void CHttpParse::parse_request(std::string& request)
+{
+	m_requestData = request;
+
+	m_httpMethod = METHOD_UNKNOW;
+	m_connection = CON_UNKNOW;
+
+	m_host.clear();
+	m_version.clear();
+	m_user_agent.clear();
+	m_referer.clear();
+
+	m_accept_encoding.clear();
+	m_accept.clear();
+	m_language.clear();
+	m_content.clear();
+
+	m_content_lenght = 0;
+	m_bHeaderDown = false;
+
+	parse_request();
 }
 
 int CHttpParse::parse_line_data_type()
@@ -79,7 +104,6 @@ int CHttpParse::parse_line(std::string& keys, std::string& str)
 	if (!keys.compare("HOST"))
 	{
 		m_host = str;
-		return 0;
 	}
 	else if (!keys.compare("CONNECTION"))
 	{
@@ -114,12 +138,14 @@ int CHttpParse::parse_line(std::string& keys, std::string& str)
 	}
 	else if (!keys.compare("CONTENT_LENGHT"))
 	{
-		m_referer = str;
+		m_content_lenght = atoi(str.c_str());
 	}
 	else
 	{
 		return -1;
 	}
+
+	return 0;
 }
 
 //取出一行，并去除结尾的回车符

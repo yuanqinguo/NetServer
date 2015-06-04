@@ -30,7 +30,7 @@ public:
 
 	~CMgrRequest();
 
-	void ReleaseHandler(evutil_socket_t& sockfd);
+	bool ReleaseHandler(evutil_socket_t& sockfd);
 
 	int HandleRequest(bufferevent*& bev, const std::string& request, std::string& reply);
 
