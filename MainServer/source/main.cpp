@@ -3,7 +3,6 @@
 #include "CMgrRequest.h"
 #include "CRedisServiceMgr.h"
 #include "CSqlServiceMgr.h"
-#include "CRcdServiceMgr.h"
 #include "CConfiger.h"
 #include "Common.h"
 #include "event2/thread.h"
@@ -36,8 +35,6 @@ void SingletonInit()
 */
 void SingletonUnInit()
 {
-	if (CConfiger::GetInstance()->GetEnableRecord())
-		CRcdServiceMgr::DelInstance();
 	CMgrRequest::DelInstance();
 	CRedisServiceMgr::DelInstance();
 	CSqlServiceMgr::DelInstance();
@@ -56,10 +53,6 @@ void SystemInit()
 	Common::initBase64();
 	CSqlServiceMgr::GetInstance()->OnInit();
 	CRedisServiceMgr::GetInstance()->OnInit();
-	if (CConfiger::GetInstance()->GetEnableRecord())
-	{
-		CRcdServiceMgr::GetInstance();
-	}
 }
 
 //反初始化系统各模块组件
@@ -121,10 +114,6 @@ int main(int argc, char** argv)
 			if(pMainServer->OnInit(LISTEN_PORT, 1) != true)
 				break;
 #endif
-			if (CConfiger::GetInstance()->GetEnableRecord())
-			{
-				CRcdServiceMgr::GetInstance()->OnStart();
-			}
 			pMainServer->OnStart();		//event_base_dispatch 阻塞
 			pMainServer->OnStop();
 			IsStart = true;

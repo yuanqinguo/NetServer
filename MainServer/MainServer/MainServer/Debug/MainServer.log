@@ -1,0 +1,10 @@
+﻿生成启动时间为 2015/6/4 16:50:30。
+     1>项目“E:\Github\NetServer\MainServer\MainServer\MainServer\MainServer.vcxproj”在节点 2 上(clean 个目标)。
+       项目文件包含 ToolsVersion="12.0" 设置，而此版本的 MSBuild 不支持该工具版本。该项目将视为包含 ToolsVersion="4.0" 设置。
+     1>_PrepareForClean:
+         正在删除文件“Debug\MainServer.lastbuildstate”。
+     1>已完成生成项目“E:\Github\NetServer\MainServer\MainServer\MainServer\MainServer.vcxproj”(clean 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:00.02

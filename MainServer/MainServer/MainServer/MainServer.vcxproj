@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\source\Common\Common.cpp" />
     <ClCompile Include="..\..\source\Common\Locker.cpp" />
+    <ClCompile Include="..\..\source\Common\MemoryPoolObj.cpp" />
     <ClCompile Include="..\..\source\Config\CConfiger.cpp" />
     <ClCompile Include="..\..\source\Connection\CEventBaseMgr.cpp" />
     <ClCompile Include="..\..\source\Connection\CMainEventBase.cpp" />
@@ -34,6 +35,7 @@
     <ClCompile Include="..\..\source\Redis\CRedisServiceMgr.cpp" />
     <ClCompile Include="..\..\source\Redis\CUtilRedis.cpp" />
     <ClCompile Include="..\..\source\Request\CHttpParse.cpp" />
+    <ClCompile Include="..\..\source\Request\CHttpReply.cpp" />
     <ClCompile Include="..\..\source\Request\CMgrRequest.cpp" />
     <ClCompile Include="..\..\source\Request\CReqHandlerObj.cpp" />
     <ClCompile Include="..\..\source\WLog\wLog.cpp" />
@@ -42,6 +44,7 @@
     <ClInclude Include="..\..\source\Common\Common.h" />
     <ClInclude Include="..\..\source\Common\CommStruct.h" />
     <ClInclude Include="..\..\source\Common\locker.h" />
+    <ClInclude Include="..\..\source\Common\MemoryPoolObj.h" />
     <ClInclude Include="..\..\source\Common\nocopyable.h" />
     <ClInclude Include="..\..\source\Config\CConfiger.h" />
     <ClInclude Include="..\..\source\Connection\CEventBaseMgr.h" />
@@ -55,8 +58,10 @@
     <ClInclude Include="..\..\source\Redis\CRedisServiceMgr.h" />
     <ClInclude Include="..\..\source\Redis\CUtilRedis.h" />
     <ClInclude Include="..\..\source\Request\CHttpParse.h" />
+    <ClInclude Include="..\..\source\Request\CHttpReply.h" />
     <ClInclude Include="..\..\source\Request\CMgrRequest.h" />
     <ClInclude Include="..\..\source\Request\CReqHandlerObj.h" />
+    <ClInclude Include="..\..\source\Request\HttpCommon.h" />
     <ClInclude Include="..\..\source\WLog\internallock.h" />
     <ClInclude Include="..\..\source\WLog\wLog.h" />
   </ItemGroup>

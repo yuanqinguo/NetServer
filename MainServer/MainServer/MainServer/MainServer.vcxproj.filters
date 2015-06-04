@@ -111,6 +111,12 @@
     <ClCompile Include="..\..\source\Request\CHttpParse.cpp">
       <Filter>源文件\Request</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\Request\CHttpReply.cpp">
+      <Filter>源文件\Request</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\Common\MemoryPoolObj.cpp">
+      <Filter>源文件\Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\WLog\internallock.h">
@@ -172,6 +178,15 @@
     </ClInclude>
     <ClInclude Include="..\..\source\Request\CHttpParse.h">
       <Filter>头文件\Request</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Request\CHttpReply.h">
+      <Filter>头文件\Request</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Request\HttpCommon.h">
+      <Filter>头文件\Request</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Common\MemoryPoolObj.h">
+      <Filter>头文件\Common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

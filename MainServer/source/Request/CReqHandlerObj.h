@@ -51,7 +51,6 @@ private:
 
 	CRedisServiceMgr* m_pRedisMgr;
 	CSqlServiceMgr* m_pSqlMgr;
-	ObjectManager<CTaskRequest> m_ObjMgr;
 
 	void* m_pArg;
 };

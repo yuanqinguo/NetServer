@@ -1,340 +1,180 @@
-/*
- * http_parser.cpp
- *
- *  Created on: Oct 26, 2014
- *      Author: liao
- */
-#include <sstream>
-#include <cstdlib>
+#include "CHttpParse.h"
+#include "wLog.h"
+#include <iostream>
+#include <string>
+#include <cctype>
 #include <algorithm>
-#include "simple_log.h"
-#include "http_parser.h"
-#include "curl/curl.h"
 
-#define MAX_REQ_SIZE 10485760
-
-std::string RequestParam::get_param(std::string &name) {
-    std::multimap<std::string, std::string>::iterator i = this->params.find(name);
-    if (i == params.end()) {
-        return std::string();
-    }
-    return i->second;
+CHttpParse::CHttpParse(std::string& request)
+	:m_requestData(request)
+	,m_bHeaderDown(false)
+{
+	parse_request();
 }
 
-void RequestParam::get_params(std::string &name, std::vector<std::string> &params) {
-    std::pair<std::multimap<std::string, std::string>::iterator, std::multimap<std::string, std::string>::iterator> ret = this->params.equal_range(name);
-    for (std::multimap<std::string, std::string>::iterator it=ret.first; it!=ret.second; ++it) {
-        params.push_back(it->second);
-    }
+CHttpParse::~CHttpParse()
+{
+
 }
 
-int RequestParam::parse_query_url(std::string &query_url) {
-    std::stringstream query_ss(query_url);
-    LOG_DEBUG("start parse_query_url:%s", query_url.c_str());
-
-    while(query_ss.good()) {
-        std::string key_value;
-        std::getline(query_ss, key_value, '&');
-        LOG_DEBUG("get key_value:%s", key_value.c_str());
-
-        std::stringstream key_value_ss(key_value);
-        while(key_value_ss.good()) {
-            std::string key, value;
-            std::getline(key_value_ss, key, '=');
-            std::getline(key_value_ss, value, '=');
-            params.insert(std::pair<std::string, std::string>(key, value));
-        }
-    }
-    return 0;
-}
-
-
-std::string RequestLine::get_request_uri() {
-	std::stringstream ss(this->request_url);
-	std::string uri;
-	std::getline(ss, uri, '?');
-	return uri;
-}
-
-int RequestLine::parse_request_line(const char *line, int size) {
-    std::string line_str(line, size);
-    std::stringstream ss(std::string(line, size));
-
-    std::getline(ss, method, ' ');
-    if(!ss.good()) {
-        LOG_ERROR("GET method error which line:%s", line_str.c_str());
-        return -1;
-    }
-    std::getline(ss, request_url, ' ');
-    if(!ss.good()) {
-        LOG_ERROR("GET request_url error which line:%s", line_str.c_str());
-        return -1;
-    }
-    int ret = parse_request_url_params();
-    if (ret != 0) {
-        LOG_WARN("parse_request_url_params fail which request_url:%s", request_url.c_str());
-        return ret;
-    }
-
-    std::getline(ss, http_version, ' ');
-
-    return 0;
-}
-
-int RequestLine::parse_request_url_params() {
-    std::stringstream ss(request_url);
-    LOG_DEBUG("start parse params which request_url:%s", request_url.c_str());
-
-    std::string uri;
-    std::getline(ss, uri, '?');
-    if(ss.good()) {
-        std::string query_url;
-        std::getline(ss, query_url, '?');
-
-        param.parse_query_url(query_url);
-    }
-    return 0;
-}
-
-std::string Request::get_param(std::string name) {
-	if(line.method == "GET") {
-		return line.get_request_param().get_param(name);
+void CHttpParse::parse_request()
+{
+	int iret = parse_line_data_type();
+	if(iret != 0)
+	{
+		WLogError("CHttpParse::parse_request::parse_line_data_type::error!\n");
 	}
-	if(line.method == "POST") {
-		return body.get_param(name);
+}
+
+int CHttpParse::parse_line_data_type()
+{
+	std::string str = "";
+	while(1)
+	{
+		if(m_bHeaderDown)
+			return 0;
+		str.clear();
+		get_line(str);
+		std::string keys;
+		size_t startpos = str.find(": ");
+		if (std::string::npos != startpos)
+		{
+			keys = str.substr(0, startpos);
+			str = str.substr(startpos+2);
+		}
+		else
+		{
+			//get 方法
+			startpos = str.find("GET");
+			size_t tmpos = str.find("POST");
+			if (startpos != std::string::npos)
+			{
+				parse_header(str);
+				m_httpMethod = METHOD_GET;
+				continue;
+			}	//post 方法
+			else if (tmpos != std::string::npos)
+			{
+				parse_header(str);
+				m_httpMethod = METHOD_POST;
+				continue;
+			}
+			else
+			{	//错误
+				return -1;
+			}
+		}
+
+		ToUpper(keys);
+		if(parse_line(keys, str))
+		{
+			WLogError("CHttpParse::parse_line_data_type::parse_line::error, keys = %s, str = %s\n",
+				keys.c_str(), str.c_str());
+		}
 	}
-	return "";
 }
 
-std::string Request::get_unescape_param(std::string name) {
-    std::string param = this->get_param(name);
-    if (param.empty()) {
-        return param;
-    }
-    char *escape_content = curl_unescape(param.c_str(), param.size());
-    std::string unescape_param(escape_content);
-    curl_free(escape_content);
-    return unescape_param;
-}
-
-void Request::get_params(std::string &name, std::vector<std::string> &params) {
-    if(line.method == "GET") {
-        line.get_request_param().get_params(name, params);
-    }
-    if(line.method == "POST") {
-        body.get_params(name, params);
-    }
-}
-
-void Request::add_header(std::string &name, std::string &value) {
-	this->headers[name] = value;
-}
-
-std::string Request::get_header(std::string name) {
-	return this->headers[name];
-}
-
-std::string Request::get_request_uri() {
-	return line.get_request_uri();
-}
-
-Request::Request() {
-    parse_part = PARSE_REQ_LINE;
-    req_buf = new std::stringstream();
-    total_req_size = 0;
-}
-
-Request::~Request() {
-    if (req_buf != NULL) {
-        delete req_buf;
-        req_buf = NULL;
-    }
-}
-
-bool Request::check_req_over() {
-    // check last 4 chars
-    int check_num = 4;
-    req_buf->seekg(-check_num, req_buf->end);
-    char check_buf[check_num];
-    bzero(check_buf, check_num);
-
-    req_buf->readsome(check_buf, check_num);
-    if (strncmp(check_buf, "\r\n\r\n", check_num) != 0) {
-        LOG_DEBUG("READ REQUEST NOT OVER!");
-        return false;
-    }
-    req_buf->seekg(0);
-    return true;
-}
-
-int Request::parse_request(const char *read_buffer, int read_size) {
-    total_req_size += read_size;
-    if (total_req_size > MAX_REQ_SIZE) {
-        LOG_INFO("TOO BIG REQUEST WE WILL REFUSE IT!");
-        return -1;
-    }
-    req_buf->write(read_buffer, read_size);
-
-    LOG_DEBUG("read from client: size:%d, content:%s", read_size, read_buffer);
-
-    if (total_req_size < 4) {
-        return 1;
-    }
-    bool is_over = this->check_req_over();
-    if (!is_over) {
-        return 1; // to be continue
-    }
-
-    std::string line;
-    int ret = 0;
-
-    while(req_buf->good()) {
-        std::getline(*req_buf, line, '\n');
-        if(line == "\r") {  /* the last line in head */
-            parse_part = PARSE_REQ_OVER;
-
-            if(this->line.method == "POST") { // post request need body
-                parse_part = PARSE_REQ_BODY;
-            }
-            continue;
-        }
-
-        if(parse_part == PARSE_REQ_LINE) { // parse request line like  "GET /index.jsp HTTP/1.1"
-            LOG_DEBUG("start parse req_line line:%s", line.c_str());
-            ret = this->line.parse_request_line(line.c_str(), line.size() - 1);
-            if(ret != 0) {
-                LOG_ERROR("parse request line error!");
-                return -1;
-            }
-            parse_part = PARSE_REQ_HEAD;
-            LOG_DEBUG("parse_request_line success which method:%s, url:%s, http_version:%s", this->line.method.c_str(), this->line.request_url.c_str(), this->line.http_version.c_str());
-
-            // check method
-            if(this->line.method != "GET" && this->line.method != "POST") {
-                LOG_ERROR("un support method:%s", this->line.method.c_str());
-                return -1;
-            }
-            continue;
-        }
-
-        if(parse_part == PARSE_REQ_HEAD && !line.empty()) { // read head
-            LOG_DEBUG("start PARSE_REQ_HEAD line:%s", line.c_str());
-
-            std::vector<std::string> parts;
-            split_str(parts, line, ':'); // line like Cache-Control:max-age=0
-            if(parts.size() < 2) {
-                LOG_WARN("not valid head which line:%s", line.c_str());
-                continue;
-            }
-
-            add_header(parts[0], parts[1]);
-            continue;
-        }
-
-        if(parse_part == PARSE_REQ_BODY && !line.empty()) {
-            LOG_DEBUG("start PARSE_REQ_BODY line:%s", line.c_str());
-
-            this->body.parse_query_url(line);
-            parse_part = PARSE_REQ_OVER;
-            break;
-        }
-    }
-
-    if(parse_part != PARSE_REQ_OVER) {
-        std::string line_info = "unknown";
-        if (parse_part > PARSE_REQ_LINE) {
-            line_info = this->line.to_string();
-        }
-        LOG_ERROR("parse request no over parse_part:%d, line_info:%s", parse_part, line_info.c_str());
-        return 1; // to be continue
-    }
-    return ret;
-}
-
-Response::Response(CodeMsg status_code) {
-	this->code_msg = status_code;
-	this->is_writed = 0;
-}
-
-void Response::set_head(std::string name, std::string &value) {
-	this->headers[name] = value;
-}
-
-void Response::set_body(Json::Value &body) {
-    Json::FastWriter writer;
-    std::string str_value = writer.write(body);
-    this->body = str_value;
-}
-
-int Response::gen_response(std::string &http_version, bool is_keepalive) {
-	LOG_DEBUG("START gen_response code:%d, msg:%s", code_msg.status_code, code_msg.msg.c_str());
-	res_bytes << http_version << " " << code_msg.status_code << " " << code_msg.msg << "\r\n";
-	res_bytes << "Server: SimpleServer/0.1" << "\r\n";
-	if(headers.find("Content-Type") == headers.end()) {
-		res_bytes << "Content-Type: application/json; charset=UTF-8" << "\r\n";
+int CHttpParse::parse_line(std::string& keys, std::string& str)
+{
+	if (!keys.compare("HOST"))
+	{
+		m_host = str;
+		return 0;
 	}
-	res_bytes << "Content-Length: " << body.size() << "\r\n";
-
-	std::string con_status = "Connection: close";
-	if(is_keepalive) {
-		con_status = "Connection: Keep-Alive";
+	else if (!keys.compare("CONNECTION"))
+	{
+		if (!str.compare("keep-alive"))
+		{
+			m_connection = CON_KEEP_LIVE;
+		}
+		else
+		{
+			m_connection = CON_CLOSE;
+		}
 	}
-	res_bytes << con_status << "\r\n";
-
-	for (std::map<std::string, std::string>::iterator it=headers.begin(); it!=headers.end(); ++it) {
-		res_bytes << it->first << ": " << it->second << "\r\n";
+	else if (!keys.compare("ACCEPT"))
+	{
+		m_accept = str;
 	}
-	// header end
-	res_bytes << "\r\n";
-	res_bytes << body;
-
-	LOG_DEBUG("gen response context:%s", res_bytes.str().c_str());
-	return 0;
-}
-
-int Response::readsome(char *buffer, int buffer_size, int &read_size) {
-    res_bytes.read(buffer, buffer_size);
-    read_size = res_bytes.gcount();
-
-    if (!res_bytes.eof()) {
-        return 1;
-    }
-    return 0;
-}
-
-int Response::rollback(int num) {
-    if (res_bytes.eof()) {
-        res_bytes.clear();
-    }
-    int rb_pos = (int) res_bytes.tellg() - num;
-    res_bytes.seekg(rb_pos);
-    return res_bytes.good() ? 0 : -1;
-}
-
-static inline std::string &ltrim(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        return s;
-}
-
-// trim from end
-static inline std::string &rtrim(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-        return s;
-}
-
-// trim from both ends
-static inline std::string &trim(std::string &s) {
-        return ltrim(rtrim(s));
-}
-
-void split_str(std::vector<std::string> &result, std::string &str, char split_char) {
-
-	std::stringstream ss(str);
-	while(ss.good()) {
-		std::string temp;
-		std::getline(ss, temp, split_char);
-
-		result.push_back(trim(temp));
+	else if (!keys.compare("USER-AGENT"))
+	{
+		m_user_agent = str;
 	}
+	else if (!keys.compare("ACCEPT-ENCODING"))
+	{
+		m_accept_encoding = str;
+	}
+	else if (!keys.compare("ACCEPT-LANGUAGE"))
+	{
+		m_language = str;
+	}
+	else if (!keys.compare("REFERER"))
+	{
+		m_referer = str;
+	}
+	else if (!keys.compare("CONTENT_LENGHT"))
+	{
+		m_referer = str;
+	}
+	else
+	{
+		return -1;
+	}
+}
 
+//取出一行，并去除结尾的回车符
+void CHttpParse::get_line(std::string& retstr)
+{
+	size_t pos = m_requestData.find("\r\n");
+	if (std::string::npos != pos)
+	{
+		retstr = m_requestData.substr(0, pos);
+	}
+	m_requestData = m_requestData.substr(pos+2);
+
+	if (retstr.empty()) //遇到空行，请求头已经解析完成，后面为正文
+	{
+		m_content = m_requestData;
+		m_requestData = "";
+		m_bHeaderDown = true;
+	}
+}
+
+void CHttpParse::ToUpper(std::string& str)
+{
+	std::transform(str.begin(), str.end(), str.begin(), toupper);
+}
+
+void CHttpParse::parse_header(std::string& retstr)
+{
+	std::vector<std::string> list;
+	SplitString(retstr, ' ', list);
+	if (list.size() > 2)
+	{
+		m_version = list.at(2);
+	}
+}
+
+void CHttpParse::SplitString(std::string s, char splitchar, std::vector<std::string>& vec)
+{
+	if(vec.size()>0)//保证vec是空的
+		vec.clear();
+	int length = s.length();
+	int start=0;
+	for(int i=0;i<length;i++)
+	{
+		if(s[i] == splitchar && i == 0)//第一个就遇到分割符
+		{
+			start += 1;
+		}
+		else if(s[i] == splitchar)
+		{
+			vec.push_back(s.substr(start,i - start));
+			start = i+1;
+		}
+		else if(i == length-1)//到达尾部
+		{
+			vec.push_back(s.substr(start,i+1 - start));
+		}
+	}
 }
