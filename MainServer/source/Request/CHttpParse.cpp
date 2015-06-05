@@ -54,10 +54,10 @@ void CHttpParse::parse_request(std::string& request)
 int CHttpParse::parse_line_data_type()
 {
 	std::string str = "";
-	while(1)
+	while(true)
 	{
 		if(m_bHeaderDown)
-			return 0;
+			break;
 		str.clear();
 		get_line(str);
 		std::string keys;
@@ -97,6 +97,8 @@ int CHttpParse::parse_line_data_type()
 				keys.c_str(), str.c_str());
 		}
 	}
+
+	return 0;
 }
 
 int CHttpParse::parse_line(std::string& keys, std::string& str)
