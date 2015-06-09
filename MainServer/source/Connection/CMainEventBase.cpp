@@ -1,10 +1,17 @@
 #include "CMainEventBase.h"
 #include "CMgrRequest.h"
+#include "CConfiger.h"
 #include "wLog.h"
 
 #include <stdio.h>
 #include <errno.h>
 #define LISTEN_FLAG 1024
+
+#ifdef WIN32
+#define CA_CERT_FILE "server/ca.crt"
+#define SERVER_CERT_FILE "server/server.crt"
+#define SERVER_KEY_FILE "server/server.key"
+#endif
 
 CMainEventBase::CMainEventBase()
 {
@@ -30,10 +37,9 @@ CMainEventBase::~CMainEventBase()
 bool CMainEventBase::OnInit(int iPort, int iThNum, bool enablessl)
 {
 	m_listenerport = iPort;
-
 #ifndef WIN32
 	//创建event_base管理对象
-	m_pEventBaseMgr = new CEventBaseMgr(iThNum, enablessl);
+	m_pEventBaseMgr = new CEventBaseMgr(iThNum);
 	if (!m_pEventBaseMgr)
 	{
 		return false;
@@ -78,7 +84,7 @@ bool CMainEventBase::TcpInit()
 	}while(0);
 
 	evutil_closesocket(listener);
-	WLogInfo("MainServer::TcpInit!\nstart listener==>port = %d, errno = %d\n", m_listenerport, errno);
+	WLogInfo("CMainEventBase::TcpInit!\nstart listener==>port = %d, errno = %d\n", m_listenerport, errno);
 
 	return false;
 }
@@ -127,7 +133,7 @@ void CMainEventBase::OnWindowsStart()
 	event_add(evtime,&tv);
 
 
-	WLogInfo("MainServer::OnStart::listenerPort = %d, pthreadID = %d\n", m_listenerport, pthread_self());
+	WLogInfo("CMainEventBase::OnStart::listenerPort = %d, pthreadID = %d\n", m_listenerport, pthread_self());
 	event_base_dispatch(m_pMainBase);
 
 	event_base_free(m_pMainBase);
@@ -174,6 +180,89 @@ void CMainEventBase::OnStop()
 
 
 #ifdef WIN32
+SSL* CMainEventBase::CreateSSL(evutil_socket_t& fd)
+{
+	if (!CConfiger::GetInstance()->GetEnableSSL())
+	{
+		return NULL;
+	}
+
+	SSL_CTX* ctx = NULL;  
+	SSL* ssl = NULL; 
+	ctx = SSL_CTX_new (SSLv23_method());
+	if( ctx == NULL)
+	{
+		printf("SSL_CTX_new error!\n");
+		return NULL;
+	}
+
+	// 要求校验对方证书  
+	SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);  
+
+	// 加载CA的证书  
+	if(!SSL_CTX_load_verify_locations(ctx, CA_CERT_FILE, NULL))
+	{
+		SSL_CTX_free(ctx);
+		printf("SSL_CTX_load_verify_locations error!\n");
+		return NULL;
+	}
+
+	// 加载自己的证书  
+	if(SSL_CTX_use_certificate_file(ctx, SERVER_CERT_FILE, SSL_FILETYPE_PEM) <= 0)
+	{
+		SSL_CTX_free(ctx);
+		printf("SSL_CTX_use_certificate_file error!\n");
+		return NULL;
+	}
+
+	// 加载自己的私钥  
+	if(SSL_CTX_use_PrivateKey_file(ctx, SERVER_KEY_FILE, SSL_FILETYPE_PEM) <= 0)
+	{
+		SSL_CTX_free(ctx);
+		printf("SSL_CTX_use_PrivateKey_file error!\n");
+		return NULL;
+	}
+
+	// 判定私钥是否正确  
+	if(!SSL_CTX_check_private_key(ctx))
+	{
+		SSL_CTX_free(ctx);
+		printf("SSL_CTX_check_private_key error!\n");
+		return NULL;
+	}
+
+	// 将连接付给SSL  
+	ssl = SSL_new (ctx);
+	if(!ssl)
+	{
+		SSL_CTX_free(ctx);
+		printf("SSL_new error!\n");
+		return NULL;
+	}
+
+	SSL_set_fd(ssl, fd);  
+	int count = 0;
+	while(true)
+	{
+		if(SSL_accept(ssl) != 1)
+		{
+			if(count > 1000)
+			{
+				int icode = -1;
+				int iret = SSL_get_error(ssl, icode);
+				SSL_free(ssl);
+				SSL_CTX_free(ctx);
+				printf("SSL_accept error! code = %d, iret = %d\n", icode, iret);
+				return NULL;
+			}
+		}
+		else
+			break;
+	}
+
+	return ssl;
+}
+
 void CMainEventBase::AcceptCallBack(evutil_socket_t fd, short events, void* arg)
 {
 	CMainEventBase* pThisObj = (CMainEventBase*)arg;
@@ -197,90 +286,81 @@ void CMainEventBase::OnAcceptCallback(evutil_socket_t& fd, short events)
 	}
 	evutil_make_socket_nonblocking(sockfd);
 
-	bufferevent* bev = bufferevent_socket_new(m_pMainBase, sockfd, BEV_OPT_CLOSE_ON_FREE);
-	if(!bev)
+	SSL* ssl = CreateSSL(sockfd);
+	if(CConfiger::GetInstance()->GetEnableSSL() && !ssl)
 	{
-		WLogError("CMainEventBase::OnAcceptCallback::bufferevent_socket_new error!\n");
+		WLogError("CMainEventBase::OnAcceptCallback::CreateSSL error! ssl NULL ");
 		return ;
 	}
-	bufferevent_setcb(bev, SocketReadCallBack, NULL/*SocketWirteCallBack*/, SocketEventCallBack, this);
-	bufferevent_enable(bev, EV_READ | EV_PERSIST);
+
+	struct event *ev = event_new(NULL, -1, 0, NULL, NULL);
+
+	//将动态创建的结构体作为event的回调参数
+	EventCtx* pCtx = new EventCtx();
+	pCtx->pEvent = ev;
+	pCtx->pSsl = ssl;
+	pCtx->sock = sockfd;
+
+	event_assign(ev, m_pMainBase, sockfd, EV_READ | EV_PERSIST,
+		EventCallBack, (void*)pCtx);
+
+	event_add(ev, NULL);
 
 }
 
-void CMainEventBase::SocketReadCallBack(bufferevent* bev, void* arg)
+//事件回调处理
+void CMainEventBase::EventCallBack(evutil_socket_t fd, short event, void* arg)
 {
-	CMainEventBase* pThisObj = (CMainEventBase*)arg;
-	if(pThisObj)
-		pThisObj->OnReadCallback(bev);
-}
-
-//读数据处理，此函数被调用，说明数据已经从内核区拷贝到bufferevent的缓冲区
-void CMainEventBase::OnReadCallback(bufferevent*& bev)
-{
-	//数据接收,必须确保当前已经把bufferevent中的数据全部读取出来
-	char* pMsg = new char[4096];
-	size_t len = bufferevent_read(bev, pMsg, 4096);
-	pMsg[len] = '\0';
-
-	//请求处理	
-	int iRet = -1;
-	std::string reply = "Error";
-
-	if (CMgrRequest::GetInstance())
-		iRet = CMgrRequest::GetInstance()->HandleRequest(bev, pMsg, reply);
-
-	//若返回数据不完整，表示需要继续接收,先不回复，等待下次回调
-	if(iRet != DATA_DEF)
+	int iret = -1;
+	EventCtx* pCtx= (EventCtx*)arg;
+	if(pCtx)
 	{
-		if(!reply.empty())
-			bufferevent_write(bev, reply.c_str(), reply.size());
-	}
-	delete pMsg;
-	pMsg = NULL;
-}
+		bool enablessl = CConfiger::GetInstance()->GetEnableSSL();
+		CMgrRequest* pMgr = CMgrRequest::GetInstance();
+		struct event* pEvent = pCtx->pEvent;
+		SSL* pssl = pCtx->pSsl;
 
-void CMainEventBase::SocketWirteCallBack(bufferevent* bev, void* arg)
-{
-	
-}
+		char buffer[4096] = {0};
+		int len = 0;
+		if (enablessl)
+		{
+			len = SSL_read(pssl, buffer, sizeof(buffer));
+		}
+		else
+		{
+			len = recv(fd, buffer, sizeof(buffer), 0);
+		}
 
-void CMainEventBase::OnWirteCallback(bufferevent*& bev)
-{
+		if (len <= 0)//客户端关闭连接，或者socket出现错误
+		{
+			delete pCtx;
+			pCtx = NULL;
+			return;
+		}
 
-}
+		std::string reply = "ERROR";
+		iret = pMgr->HandleRequest(pCtx, buffer, reply);
+		if(iret != DATA_DEF)//若为数据不足，则暂时不回复，等待下次回调
+		{
+			if (enablessl)
+			{
+				len = SSL_write(pssl, reply.c_str(), reply.length());
+			}
+			else
+			{
+				len = send(fd, reply.c_str(), reply.length(), 0);
+			}
 
-//异常回调处理
-void CMainEventBase::SocketEventCallBack(struct bufferevent *bev, short event, void *arg)
-{
-	CMainEventBase* pThisObj = (CMainEventBase*)arg;
-	if(pThisObj)
-		pThisObj->OnEventCallback(bev, event);
-}
-
-void CMainEventBase::OnEventCallback(bufferevent*& bev, short& event)
-{
-	if (event & BEV_EVENT_EOF)
-	{
-		WLogInfo("connection closed\n");
-	}
-	else if (event & BEV_EVENT_ERROR)
-	{
-		WLogError("some other error\n");
+			if (len < 0)
+			{
+				WLogError("CMainEventBase::EventCallBack::SSL_write error!\n");
+			}
+		}
 	}
 	else
 	{
-		WLogError("unknow error!\n");
+		WLogError("CMainEventBase::EventCallBack::EventCtx is NULL error!\n");
 	}
-
-	WLogError("CMainEventBase::OnEventCallback::close\n");
-
-	evutil_socket_t sock = bufferevent_getfd(bev);
-	//这将自动close套接字和free读写缓冲区
-	if (CMgrRequest::GetInstance())
-		CMgrRequest::GetInstance()->ReleaseHandler(sock);
-	else
-		bufferevent_free(bev);
 }
 
 void CMainEventBase::TimeoutCallBack(evutil_socket_t fd, short event, void* arg)

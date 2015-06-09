@@ -4,8 +4,8 @@
 #include <string>
 #include <map>
 
+#include "CEventBaseMgr.h"
 #include "event2/util.h"
-#include "event2/bufferevent.h"
 #include "locker.h"
 #include "CommStruct.h"
 #include "CObjPoolTmpl.h"
@@ -32,7 +32,7 @@ public:
 
 	bool ReleaseHandler(evutil_socket_t& sockfd);
 
-	int HandleRequest(bufferevent*& bev, const std::string& request, std::string& reply);
+	int HandleRequest(EventCtx*& pev, const std::string& request, std::string& reply);
 
 	void OnCheckActiveTime();
 protected:

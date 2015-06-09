@@ -52,6 +52,11 @@ public:
 	{
 		return m_insert_count;
 	}
+
+	bool GetEnableSSL()
+	{
+		return m_isEnablessl;
+	}
 protected:
 	bool ReadLine(std::ifstream& ifs, std::string& outString);
 
@@ -80,6 +85,7 @@ private:
 
 	int m_threads;
 	bool m_isEnableRecord;
+	bool m_isEnablessl;
 	int m_insert_wait;
 	int m_insert_count;
 	int m_iLine;

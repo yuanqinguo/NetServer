@@ -9,6 +9,7 @@
 #define TYPE_INSERT_WAIT "insert_wait"			//插入等待时间 毫秒
 #define TYPE_INSERT_COUNT "insert_max_count"	//每次插入记录的最大条数
 #define TYPE_ENABLE_RECORD "enable_record"		//当前节点是否启用印章操作记录模块
+#define TYPE_ENABLE_SSL "enable_ssl"			//是否启用ssl会话加密
 
 Locker CConfiger::m_locker;
 CConfiger* CConfiger::m_pInstance = NULL;
@@ -17,6 +18,12 @@ CConfiger::CConfiger()
 {
 	m_configMysqlMap.clear();
 	m_configRedisMap.clear();
+	m_isEnablessl = false;
+	m_insert_wait = 100;
+	m_insert_count = 100;
+	m_isEnablessl = false;
+	m_isEnableRecord = false;
+	m_threads = 10;
 }
 
 CConfiger::~CConfiger()
@@ -239,6 +246,12 @@ bool CConfiger::PerformanceItem(const std::string& str)
 		if (!header.compare(TYPE_ENABLE_RECORD))
 		{
 			m_isEnableRecord = ( ( str.substr(pos+1).compare("true")==0 ) ? (true) : (false));
+			return true;
+		}
+
+		if (!header.compare(TYPE_ENABLE_SSL))
+		{
+			m_isEnablessl= ( ( str.substr(pos+1).compare("true")==0 ) ? (true) : (false));
 			return true;
 		}
 	}

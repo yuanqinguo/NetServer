@@ -61,6 +61,7 @@ LIBS = -lpthread \
 		-levent_core \
 		-levent_extra \
 		-levent_pthreads \
+		-levent_openssl \
 		-luuid \
 		-lhiredis \
 		-lmysqlclient

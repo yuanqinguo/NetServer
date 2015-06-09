@@ -12,6 +12,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hiredis", "..\hiredis-win32
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example", "..\hiredis-win32-master\win32\example\example.vcxproj", "{9715AC8D-EA96-4943-92D5-858F65D07EDB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SSLTest", "..\..\..\SSLTest\SSLTest.vcxproj", "{113D6E97-4E4D-40B9-A45E-3471EBF38BF4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SSLTestC", "..\..\..\SSLTestC\SSLTestC.vcxproj", "{FC479909-9F18-42A3-BF85-BD40C3DA0A2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -52,6 +56,18 @@ Global
 		{9715AC8D-EA96-4943-92D5-858F65D07EDB}.Release|Win32.Build.0 = Release|Win32
 		{9715AC8D-EA96-4943-92D5-858F65D07EDB}.Release|x64.ActiveCfg = Release|x64
 		{9715AC8D-EA96-4943-92D5-858F65D07EDB}.Release|x64.Build.0 = Release|x64
+		{113D6E97-4E4D-40B9-A45E-3471EBF38BF4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{113D6E97-4E4D-40B9-A45E-3471EBF38BF4}.Debug|Win32.Build.0 = Debug|Win32
+		{113D6E97-4E4D-40B9-A45E-3471EBF38BF4}.Debug|x64.ActiveCfg = Debug|Win32
+		{113D6E97-4E4D-40B9-A45E-3471EBF38BF4}.Release|Win32.ActiveCfg = Release|Win32
+		{113D6E97-4E4D-40B9-A45E-3471EBF38BF4}.Release|Win32.Build.0 = Release|Win32
+		{113D6E97-4E4D-40B9-A45E-3471EBF38BF4}.Release|x64.ActiveCfg = Release|Win32
+		{FC479909-9F18-42A3-BF85-BD40C3DA0A2B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FC479909-9F18-42A3-BF85-BD40C3DA0A2B}.Debug|Win32.Build.0 = Debug|Win32
+		{FC479909-9F18-42A3-BF85-BD40C3DA0A2B}.Debug|x64.ActiveCfg = Debug|Win32
+		{FC479909-9F18-42A3-BF85-BD40C3DA0A2B}.Release|Win32.ActiveCfg = Release|Win32
+		{FC479909-9F18-42A3-BF85-BD40C3DA0A2B}.Release|Win32.Build.0 = Release|Win32
+		{FC479909-9F18-42A3-BF85-BD40C3DA0A2B}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,15 +1,10 @@
 #ifndef CMAIN_SERVER_H
 #define CMAIN_SERVER_H
 
+#include "CEventBaseMgr.h"
+#include "openssl/ssl.h"
 #include "locker.h"
 
-#ifndef WIN32
-#include "CEventBaseMgr.h"
-#endif
-
-#include "event2/listener.h"
-#include "event2/thread.h"
-#include "event2/bufferevent.h" 
 #include <vector>
 
 class CMainEventBase
@@ -39,18 +34,9 @@ protected:
 	void DoAccept();
 #else
 	void OnWindowsStart();
-	/*event_base回调函数*/
-	//读数据回调
-	static void SocketReadCallBack(bufferevent* bev, void* arg);
-	void OnReadCallback(bufferevent*& bev);
-
-	//写数据回调
-	static void SocketWirteCallBack(bufferevent* bev, void* arg);
-	void OnWirteCallback(bufferevent*& bev);
-
-	//异常回调，此回调将直接关闭连接释放bufferevent
-	static void SocketEventCallBack(struct bufferevent *bev, short event, void *arg);
-	void OnEventCallback(bufferevent*& bev, short& event);
+	SSL* CreateSSL(evutil_socket_t& fd);
+	//事件回调
+	static void EventCallBack(evutil_socket_t fd, short event, void* arg);
 
 	//定时器，处理长时间无数据交互的链接
 	static void TimeoutCallBack(evutil_socket_t fd, short event, void* arg);
@@ -58,7 +44,7 @@ protected:
 #endif
 
 private:
-	event_base* m_pMainBase; //主线程event_base，只负责accept链接
+	event_base* m_pMainBase;
 
 #ifndef WIN32
 	CEventBaseMgr* m_pEventBaseMgr; //工作event_base的管理对象
@@ -70,6 +56,4 @@ private:
 
 	bool m_isInited;	//是否初始化
 };
-
-
 #endif //CMAIN_SERVER_H

@@ -55,9 +55,12 @@ bool CMgrRequest::ReleaseHandler(evutil_socket_t& sockfd)
 		pObj = it->second;
 		if (pObj)
 		{
-			bufferevent* pBevt = (bufferevent*)pObj->GetBufferEvent();
-			if(pBevt)
-				bufferevent_free(pBevt);
+			EventCtx* pCtx = (EventCtx*)pObj->GetBufferEvent();
+			if(pCtx)
+			{
+				delete pCtx;
+				pCtx = NULL;
+			}
 			m_ObjMgr.Delete(pool, pObj);
 			m_ReqHandlerMap.erase(it);
 		}
@@ -84,9 +87,12 @@ void CMgrRequest::OnCheckActiveTime()
 			int iVal = curTime - pObj->GetActiveTime();
 			if (iVal >= ACTIVA_TIMEVAL) //超过ACTIVE_TIMEVAL无数据交互,踢出请求
 			{
-				bufferevent* pBevt = (bufferevent*)pObj->GetBufferEvent();
-				if(pBevt)
-					bufferevent_free(pBevt);
+				EventCtx* pCtx = (EventCtx*)pObj->GetBufferEvent();
+				if(pCtx)
+				{
+					delete pCtx;
+					pCtx = NULL;
+				}
 				WLogInfo("CMgrRequest::OnCheckActiveTime::BufferEvent Free!\n");
 				m_ObjMgr.Delete(pool, pObj);
 				m_ReqHandlerMap.erase(it++);
@@ -102,14 +108,13 @@ void CMgrRequest::OnCheckActiveTime()
 	}
 }
 
-int CMgrRequest::HandleRequest(bufferevent*& bev, const std::string& request, std::string& reply)
+int CMgrRequest::HandleRequest(EventCtx*& pev, const std::string& request, std::string& reply)
 {
-	reply.clear();
 	int iRet = -1;
 	bool isDone = false;
 
 	CReqHandlerObj* pObj = NULL;
-	evutil_socket_t sockfd = bufferevent_getfd(bev);
+	evutil_socket_t sockfd = pev->sock;
 	m_LockerReqMap.lock();
 	std::map<int, CReqHandlerObj*>::iterator it;
 	it = m_ReqHandlerMap.find(sockfd);
@@ -130,7 +135,7 @@ int CMgrRequest::HandleRequest(bufferevent*& bev, const std::string& request, st
 	else
 	{
 		m_LockerReqMap.unlock(); //先解锁，因为内存池内部有锁操作,避免造成死锁
-		pObj = m_ObjMgr.Create(MemPoolObj::GetMemoryPool(), bev);
+		pObj = m_ObjMgr.Create(MemPoolObj::GetMemoryPool(), pev);
 		if(pObj)
 		{
 			iRet = pObj->CheckData(request);
@@ -157,13 +162,6 @@ int CMgrRequest::HandleRequest(bufferevent*& bev, const std::string& request, st
 
 	if (pObj && iRet != DATA_DEF)
 	{
-		//若数据测查结果为DATA_ERROR 或 UNKNOWN，作废此次请求
-		if(DATA_ERROR == iRet || UNKNOW == iRet)
-		{
-			bufferevent* pBevt = (bufferevent*)pObj->GetBufferEvent();
-			if(pBevt)
-				bufferevent_free(pBevt);
-		}
 		m_ObjMgr.Delete(MemPoolObj::GetMemoryPool(), pObj);
 	}
 

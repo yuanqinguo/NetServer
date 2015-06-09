@@ -29,6 +29,7 @@ CReqHandlerObj::~CReqHandlerObj()
 //此函数被执行表示当前为一个有效的请求，并且，数据接收完整无误
 int CReqHandlerObj::OnHandle(std::string& reply)
 {
+	reply.clear();
 	std::string& content = m_pHttpParse->get_content();
 
 
