@@ -309,8 +309,7 @@ void CEventBaseMgr::EventCallBack(evutil_socket_t fd, short event, void* arg)
 
 		if (len <= 0)//客户端关闭连接，或者socket出现错误
 		{
-			delete pCtx;
-			pCtx = NULL;
+			EventCtx_free(pCtx);
 			return;
 		}
 

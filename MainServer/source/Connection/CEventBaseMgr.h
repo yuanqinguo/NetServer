@@ -64,6 +64,10 @@ typedef struct event_ctx
 	}
 }EventCtx;
 
+#define EventCtx_free(x) 	\
+	if (x) \
+	{ delete x;	x = NULL; }
+
 class CEventBaseMgr
 {
 public:

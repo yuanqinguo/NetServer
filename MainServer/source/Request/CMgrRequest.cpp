@@ -56,15 +56,10 @@ bool CMgrRequest::ReleaseHandler(evutil_socket_t& sockfd)
 		if (pObj)
 		{
 			EventCtx* pCtx = (EventCtx*)pObj->GetBufferEvent();
-			if(pCtx)
-			{
-				delete pCtx;
-				pCtx = NULL;
-			}
+			EventCtx_free(pCtx);
 			m_ObjMgr.Delete(pool, pObj);
 			m_ReqHandlerMap.erase(it);
 		}
-
 		return true;
 	}
 
@@ -88,17 +83,12 @@ void CMgrRequest::OnCheckActiveTime()
 			if (iVal >= ACTIVA_TIMEVAL) //超过ACTIVE_TIMEVAL无数据交互,踢出请求
 			{
 				EventCtx* pCtx = (EventCtx*)pObj->GetBufferEvent();
-				if(pCtx)
-				{
-					delete pCtx;
-					pCtx = NULL;
-				}
-				WLogInfo("CMgrRequest::OnCheckActiveTime::BufferEvent Free!\n");
+				EventCtx_free(pCtx);
+				WLogInfo("CMgrRequest::OnCheckActiveTime::EventCtx_free!\n");
 				m_ObjMgr.Delete(pool, pObj);
 				m_ReqHandlerMap.erase(it++);
 				continue;
 			}
-
 			it++;
 		}
 		else

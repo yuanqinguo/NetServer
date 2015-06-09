@@ -124,14 +124,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\libevent\include;$(SolutionDir)..\pthreads-win32\include;$(SolutionDir)..\..\MemPool;$(SolutionDir)..\source\WLog;$(SolutionDir)..\source;$(SolutionDir)..\source\Mysql;$(SolutionDir)..\source\Redis;$(SolutionDir)..\source\Config;$(SolutionDir)..\libhiredis\include;$(SolutionDir)..\libmysql\include;$(SolutionDir)..\source\Connection;$(SolutionDir)..\source\Request;$(SolutionDir)..\source\Common;$(SolutionDir)..\source\Request\jsoncpp\include;$(SolutionDir)..\..\..\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\libevent\include;$(SolutionDir)..\pthreads-win32\include;$(SolutionDir)..\..\MemPool;$(SolutionDir)..\source\WLog;$(SolutionDir)..\source;$(SolutionDir)..\source\Mysql;$(SolutionDir)..\source\Redis;$(SolutionDir)..\source\Config;$(SolutionDir)..\libhiredis\include;$(SolutionDir)..\libmysql\include;$(SolutionDir)..\source\Connection;$(SolutionDir)..\source\Request;$(SolutionDir)..\source\Common;$(SolutionDir)..\source\Request\jsoncpp\include;$(SolutionDir)..\..\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>ws2_32.lib;wsock32.lib;libevent.lib;libevent_core.lib;libevent_extras.lib;pthreadVC1.lib;hiredis.lib;libmysql.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\libevent\lib\32;$(SolutionDir)..\pthreads-win32\lib;$(SolutionDir)..\libhiredis\lib;$(SolutionDir)..\libmysql\lib;$(SolutionDir)..\libmysql\lib\vs10;$(SolutionDir)..\..\..\openssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\libevent\lib\32;$(SolutionDir)..\pthreads-win32\lib;$(SolutionDir)..\libhiredis\lib;$(SolutionDir)..\libmysql\lib;$(SolutionDir)..\libmysql\lib\vs10;$(SolutionDir)..\..\openssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
