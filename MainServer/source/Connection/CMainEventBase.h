@@ -38,6 +38,12 @@ protected:
 	//事件回调
 	static void EventCallBack(evutil_socket_t fd, short event, void* arg);
 
+	static int SslRecv(SSL* ssl, char* buffer, int ilen);
+	static int NormalRecv(evutil_socket_t& fd, char* buffer, int ilen);
+
+	static int SslSend(SSL* ssl, const char* buffer, int ilen);
+	static int NormalSend(evutil_socket_t& fd, const char* buffer, int ilen);
+
 	//定时器，处理长时间无数据交互的链接
 	static void TimeoutCallBack(evutil_socket_t fd, short event, void* arg);
 	void OnTimeoutCallback();
