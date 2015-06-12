@@ -4,8 +4,7 @@
 #include "CConfiger.h"
 
 #include <cstdlib>
-
-#define _EVENT_HAVE_OPENSSL
+#include <errno.h>
 
 #define CA_CERT_FILE "server/ca.crt"
 #define SERVER_CERT_FILE "server/server.crt"
@@ -122,19 +121,27 @@ SSL* CEventBaseMgr::CreateSSL(evutil_socket_t& fd)
 	}
 
 	SSL_set_fd(ssl, fd);  
-	int count = 0;
-	while(true)
+	bool isContinue = true;
+	while(isContinue)
 	{
+		isContinue = false;
 		if(SSL_accept(ssl) != 1)
 		{
-			if(count > 1000)
+			int icode = -1;
+			int iret = SSL_get_error(ssl, icode);
+			if (iret == SSL_ERROR_WANT_READ ||
+				iret == SSL_ERROR_WANT_WRITE)
 			{
-				int icode = -1;
-				int iret = SSL_get_error(ssl, icode);
-				SSL_free(ssl);
+				isContinue = true;
+			}
+			else
+			{
 				SSL_CTX_free(ctx);
-				printf("SSL_accept error! code = %d, iret = %d\n", icode, iret);
-				return NULL;
+				SSL_free(ssl);
+				ctx = NULL;
+				ssl = NULL;
+
+				break;
 			}
 		}
 		else
@@ -291,8 +298,8 @@ void CEventBaseMgr::EventCallBack(evutil_socket_t fd, short event, void* arg)
 	EventCtx* pCtx= (EventCtx*)arg;
 	if(pCtx)
 	{
-		CMgrRequest* pMgr = CMgrRequest::GetInstance();
 		bool enablessl = CConfiger::GetInstance()->GetEnableSSL();
+		CMgrRequest* pMgr = CMgrRequest::GetInstance();
 		struct event* pEvent = pCtx->pEvent;
 		SSL* pssl = pCtx->pSsl;
 
@@ -300,11 +307,11 @@ void CEventBaseMgr::EventCallBack(evutil_socket_t fd, short event, void* arg)
 		int len = 0;
 		if (enablessl)
 		{
-			len = SSL_read(pssl, buffer, sizeof(buffer));
+			len = SslRecv(pssl, buffer, sizeof(buffer));
 		}
 		else
 		{
-			len = recv(fd, buffer, sizeof(buffer), 0);
+			len =	NormalRecv(fd, buffer, sizeof(buffer));
 		}
 
 		if (len <= 0)//客户端关闭连接，或者socket出现错误
@@ -319,15 +326,16 @@ void CEventBaseMgr::EventCallBack(evutil_socket_t fd, short event, void* arg)
 		{
 			if (enablessl)
 			{
-				len = SSL_write(pssl, reply.c_str(), reply.length());
+				len = SslSend(pssl, reply.c_str(), reply.length());
 			}
 			else
 			{
-				len = send(fd, reply.c_str(), reply.length(), 0);
+				len = NormalSend(fd, reply.c_str(), reply.length());
 			}
+
 			if (len < 0)
 			{
-				WLogError("CEventBaseMgr::EventCallBack::SSL_write error!\n");
+				WLogError("CEventBaseMgr::EventCallBack::send error!\n");
 			}
 		}
 	}
@@ -335,6 +343,135 @@ void CEventBaseMgr::EventCallBack(evutil_socket_t fd, short event, void* arg)
 	{
 		WLogError("CEventBaseMgr::EventCallBack::EventCtx is NULL error!\n");
 	}
+}
+
+
+int CEventBaseMgr::SslRecv(SSL* ssl, char* buffer, int ilen)
+{
+	int ires = 0, count = 0;;
+	bool isCoutinue = true;
+	while (isCoutinue)
+	{
+		ires = SSL_read(ssl, buffer + count, ilen - count);
+		int nRes = SSL_get_error(ssl, ires);
+		if(nRes == SSL_ERROR_NONE)
+		{
+			if(ires > 0)
+			{
+				count += ires;
+				if (count >= ilen)
+				{
+					break;
+				}
+				continue;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return count;
+}
+
+int CEventBaseMgr::NormalRecv(evutil_socket_t& fd, char* buffer, int ilen)
+{
+	int ires = 0, count = 0;;
+	bool isCoutinue = true;
+	while (isCoutinue)
+	{
+		ires = recv(fd, buffer+count, ilen-count, 0);
+		if (ires < 0)
+		{
+			if(errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				continue;	//没有读到数据
+			}
+			else
+			{
+				break;	//读取失败
+			}
+		}
+		else if (ires == 0)
+		{
+			break;	//读取完成，或者客户端关闭连接
+		}
+		else
+		{
+			count += ires;	//读到数据
+			if (count >= ilen)	//缓冲区不够大，暂时不处理
+			{
+				break;
+			}
+		}
+	}
+
+	return count;
+}
+
+int CEventBaseMgr::SslSend(SSL* ssl, const char* buffer, int ilen)
+{
+	int ires = 0, count = 0;;
+	bool isCoutinue = true;
+	while (isCoutinue)
+	{
+		ires = SSL_write(ssl, buffer + count, ilen - count);
+		int nRes = SSL_get_error(ssl, ires);
+		if(nRes == SSL_ERROR_NONE)
+		{
+			if(ires > 0)
+			{
+				if (count >= ilen)
+				{
+					break;
+				}
+				count += ires;
+				continue;
+			}
+		}
+		else if (nRes == SSL_ERROR_WANT_READ)
+		{
+			continue;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return count;
+}
+
+int CEventBaseMgr::NormalSend(evutil_socket_t& fd, const char* buffer, int ilen)
+{
+	int ires = 0, count = 0;;
+	bool isCoutinue = true;
+	while (isCoutinue)
+	{
+		ires = send(fd, buffer+count, ilen-count, 0);
+		if (ires < 0)
+		{
+			if(errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				continue;	//内核缓冲区空间不足
+			}
+			else
+			{
+				break;	//写入失败
+			}
+		}
+		else
+		{
+			count += ires;	//写入ires数据
+			if (count >= ilen)	//数据写入完成
+			{
+				break;
+			}
+		}
+	}
+
+	return count;
 }
 
 void CEventBaseMgr::TimeoutCallBack(evutil_socket_t fd, short event, void* arg)

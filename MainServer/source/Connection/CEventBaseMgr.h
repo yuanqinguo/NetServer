@@ -86,6 +86,12 @@ protected:
 	void LibEvInit();
 	SSL* CreateSSL(evutil_socket_t& sockfd);
 
+	static int SslRecv(SSL* ssl, char* buffer, int ilen);
+	static int NormalRecv(evutil_socket_t& fd, char* buffer, int ilen);
+
+	static int SslSend(SSL* ssl, const char* buffer, int ilen);
+	static int NormalSend(evutil_socket_t& fd, const char* buffer, int ilen);
+
 	//管道可读，读回来的值为新建立链接的sockfd
 	static void PipeReadCallBack(evutil_socket_t fd, short event, void* arg);
 	void OnPipeReadCallback(evutil_socket_t& fd, void* arg);

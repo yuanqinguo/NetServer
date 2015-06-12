@@ -244,6 +244,7 @@ SSL* CMainEventBase::CreateSSL(evutil_socket_t& fd)
 	bool isContinue = true;
 	while(isContinue)
 	{
+		isContinue = false;
 		if(SSL_accept(ssl) != 1)
 		{
 			int icode = -1;
@@ -254,7 +255,14 @@ SSL* CMainEventBase::CreateSSL(evutil_socket_t& fd)
 				isContinue = true;
 			}
 			else
+			{
+				SSL_CTX_free(ctx);
+				SSL_free(ssl);
+				ctx = NULL;
+				ssl = NULL;
+
 				break;
+			}
 		}
 		else
 			break;
